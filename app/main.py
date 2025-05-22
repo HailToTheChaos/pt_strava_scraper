@@ -91,14 +91,12 @@ def _search_ids_by_name(name: str) -> list[str]:
         athlete_ids ()
     """
     ENDPOINT = f"{BASE_URL}/athletes/search"
-    user_url = f"{ENDPOINT}?query={quote(name)}"
-
     athlete_ids = []
+
     with sync_playwright() as p:
         browser = p.firefox.launch(headless=True)
         context = browser.new_context()
 
-        # Se configura la cookie de playwright para poder iniciar sesión
         context.add_cookies(
             [
                 {
@@ -111,21 +109,39 @@ def _search_ids_by_name(name: str) -> list[str]:
                 }
             ]
         )
-        page = context.new_page()
-        response = page.goto(user_url)
 
-        if response and response.status == 200:
-            # Se obtienen todos los elementos que contienen enlaces a atletas
+        page = context.new_page()
+
+        # Buscamos los resultados en todas las páginas hasta que nos salga
+        # que no se han encontrado más resultados
+        page_num = 1
+        while True:
+            user_url = f"{ENDPOINT}?query={quote(name)}&page={page_num}"
+            response = page.goto(user_url)
+
+            if not response or response.status != 200:
+                break  # Error de conexión
+
+            if page.locator("text=No se han encontrado resultados para").is_visible():
+                break
+
             athlete_links = page.locator(
                 "li.AthleteList_athleteListItem__egbVo div.Athlete_athleteInfo__rVPKN a[href^='/athletes/']"
             ).all()
 
-            # Se extraen los IDs de los hrefs
+            if not athlete_links:
+                break
+
             for link in athlete_links:
                 href = link.get_attribute("href")
                 if href and "/athletes/" in href:
                     athlete_id = href.split("/athletes/")[-1]
-                    athlete_ids.append(athlete_id)
+                    if athlete_id not in athlete_ids:
+                        athlete_ids.append(athlete_id)
+
+            page_num += 1  # Siguiente página
+
+        browser.close()
 
     return athlete_ids
 
@@ -168,13 +184,17 @@ def _save_dicto_to_json_file(file_name: str, data: dict) -> None:
 
 def main():
     list_ids = ["1854350", "113191718", "6830469"]
-    list_usernames = ["Miguel Ángel Durán", "Leon Parkes", "Javi Guerrero"]
+    list_usernames = ["Miguel Ángel Durán", "Leon Parkes"]
 
+    print("Obteniendo datos de los usuarios...")
     dict_users_data_by_id = get_users_data_by_ids(list_ids)
+    print("--> Datos Obtenidos")
+    print("Obteniendo IDs por nombre de usuario...")
     dict_users_ids_by_name = get_user_ids_by_name(list_usernames)
+    print("-->IDs obtenidos")
 
-    print(dict_users_data_by_id)
-    print(dict_users_ids_by_name)
+    print("Datos de usuarios:", dict_users_data_by_id)
+    print("IDs de usuarios:", dict_users_ids_by_name)
 
     _save_dicto_to_json_file(
         file_name="user_data_by_id.json", data=dict_users_data_by_id
