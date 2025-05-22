@@ -1,6 +1,6 @@
+import json
 import os
 from typing import Optional
-from warnings import warn
 from dotenv import load_dotenv
 from requests import get
 from bs4 import BeautifulSoup as BS
@@ -77,7 +77,19 @@ def get_users_data_by_ids(list_ids: list[str]) -> dict[Optional[str]]:
     return users_data
 
 
-def _search_ids_by_name(name: str) -> Optional[BS]:
+def _search_ids_by_name(name: str) -> list[str]:
+    """
+    La función `_search_ids_by_name` obtiene todos los IDs bucando un nombre
+    en el buscador de Strava.
+
+    Una vez se obtiene el soap con los datos, se van extrayendo los IDs de las etiquetas.
+
+    Args:
+        name (str): Nombre a buscar
+
+    Returns:
+        athlete_ids ()
+    """
     ENDPOINT = f"{BASE_URL}/athletes/search"
     user_url = f"{ENDPOINT}?query={quote(name)}"
 
@@ -138,6 +150,22 @@ def get_user_ids_by_name(list_names: list[str]) -> dict:
     return users_data
 
 
+def _save_dicto_to_json_file(file_name: str, data: dict) -> None:
+    """
+    La función `_save_dicto_to_json_file` guarda los resultados en un json,
+    dentro de la carpeta output.
+
+    Args:
+        file_name (str): nombre del fichero donde se van a guardar los datos.
+        data (dict): datos a guardar.
+    """
+    file_path = "output"
+    os.makedirs(file_path, exist_ok=True)
+
+    with open(f"{file_path}/{file_name}", "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False)
+
+
 def main():
     list_ids = ["1854350", "113191718", "6830469"]
     list_usernames = ["Miguel Ángel Durán", "Leon Parkes", "Javi Guerrero"]
@@ -147,6 +175,13 @@ def main():
 
     print(dict_users_data_by_id)
     print(dict_users_ids_by_name)
+
+    _save_dicto_to_json_file(
+        file_name="user_data_by_id.json", data=dict_users_data_by_id
+    )
+    _save_dicto_to_json_file(
+        file_name="users_ids_by_name.json", data=dict_users_ids_by_name
+    )
 
 
 if __name__ == "__main__":
