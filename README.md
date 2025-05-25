@@ -1,7 +1,6 @@
 # Scrapper de Strava.com
 
 ## Enunciado
-
 1. El programa en python recibirá una lista de ids de usuarios, debe acceder a cada perfil
 del usuario y devolver: Nombre, ubicación, descripción y url de la imagen del usuario.
 2. Implementar una función que dado un nombre, extraiga una lista de usuarios con ese
@@ -50,3 +49,13 @@ Para resolver los ejercicios de Web Scraping, he utilizado las librerías **requ
 He decidido utilizar Playwright debido a que tiene menor consumo de recursos que otras librerías, como Selenium.
 
 Las librerías requeridas se encuentran dentro del fichero `requirements.txt`.
+
+### Funcionamiento
+El funcionamiento de la aplicación es sencilla. Primero se lanza el contenedor Docker y el programa busca en Strava la información de los usuarios según los IDs que se han 'hardcodeado'. Al no requerir de carga dinámica, se utiliza Request para hacer la petición con la Cookie de sesión. Se muestra el resultado en un listado de diccionarios.
+
+Posteriormente, se buscan los IDs asociados a un nombre de usuario. Se utiliza el buscador de Strava para buscar usuarios. Al ser una lista dinámica lo que carga, se utiliza la librería **Playwright**.
+Una vez se obtienen todos los elementos de los usuarios, se extraen los IDs de los enlaces que redireccionan a la página del usuario.
+
+Finalmente, se exportan los datos en ficheros JSON.
+
+
