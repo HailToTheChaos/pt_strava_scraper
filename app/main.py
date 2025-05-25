@@ -66,13 +66,16 @@ def get_users_data_by_ids(list_ids: list[str]) -> dict[Optional[str]]:
     """
     url = f"{BASE_URL}/athletes"
 
-    users_data = {}
+    users_data = []
     for id in list_ids:
+        data = {}
         response = get(f"{url}/{id}", cookies=COOKIE)
 
         bs_user_page = BS(response.text, features="html.parser")
 
-        users_data[id] = _extract_user_info(bs_user_page)
+        data["id"] = id
+        data["data"] = _extract_user_info(bs_user_page)
+        users_data.append(data)
 
     return users_data
 
@@ -155,14 +158,18 @@ def get_user_ids_by_name(list_names: list[str]) -> dict:
     Args:
         list_names (list[str]): listado de nombres a buscar
     """
-    users_data = {}
+    users_data = []
     for name in list_names:
+        user_data = {}
         response = _search_ids_by_name(name)
         if not response:
             continue
 
-        users_data[name] = response
-    # for name in
+        user_data["name"] = name
+        user_data["IDs"] = response
+
+        users_data.append(user_data)
+
     return users_data
 
 
